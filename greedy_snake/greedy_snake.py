@@ -1,33 +1,18 @@
 import random
-
 import pygame
-import time
 import pygame.font
 
-"""
-色卡：
-250,240,228 背景色
-
-155,205,210
-
-255,133,81
-
-255, 222, 222
-"""
-
-BACKGROUND_COLOR = (250, 240, 228)  # 背景色
-LINE_COLOR = (255, 222, 222)  # 线条颜色
+BACKGROUND_COLOR = (248, 246, 244)  # 背景色
 BUTTON_COLOR = (155, 205, 210)  # 按钮颜色
 BUTTON_ACTIVE_COLOR = (255, 133, 81)  # 按钮激活颜色
 TEXT_COLOR = (255, 255, 255)  # 文字颜色
-SNAKE_COLOR = (155, 205, 210)  # 蛇🐍颜色
+SNAKE_COLOR = (87, 125, 134)  # 🐍头颜色
+SNAKE_BODY_COLOR = (135, 203, 185)  # 🐍身体颜色
 SNAKE_MOVE_UP = "UP"  # 🐍向上移动
 SNAKE_MOVE_DOWN = "DOWN"  # 🐍向下移动
 SNAKE_MOVE_LEFT = "LEFT"  # 🐍向左移动
 SNAKE_MOVE_RIGHT = "RIGHT"  # 🐍向右移动
 
-
-# 贪吃蛇🐍
 
 class Location(object):
 
@@ -62,25 +47,58 @@ class Snake(object):
         :param key:
         :return:
         """
-        if key == pygame.K_RIGHT:
+        if key == pygame.K_RIGHT or key == pygame.K_d:
             if self.move_direction != SNAKE_MOVE_LEFT:
                 self.move_direction = SNAKE_MOVE_RIGHT
-        elif key == pygame.K_LEFT:
+        elif key == pygame.K_LEFT or key == pygame.K_a:
             if self.move_direction != SNAKE_MOVE_RIGHT:
                 self.move_direction = SNAKE_MOVE_LEFT
-        elif key == pygame.K_UP:
+        elif key == pygame.K_UP or key == pygame.K_w:
             if self.move_direction != SNAKE_MOVE_DOWN:
                 self.move_direction = SNAKE_MOVE_UP
-        elif key == pygame.K_DOWN:
+        elif key == pygame.K_DOWN or key == pygame.K_s:
             if self.move_direction != SNAKE_MOVE_UP:
                 self.move_direction = SNAKE_MOVE_DOWN
         return
 
     def draw(self):
         for item in self.location:
-            grid_surface = pygame.Surface((self.cell_size, self.cell_size))
-            grid_surface.fill(SNAKE_COLOR)
-            self.screen.blit(grid_surface, (item.x, item.y))
+            surface = pygame.Surface((self.cell_size, self.cell_size))
+            surface.fill(SNAKE_BODY_COLOR)
+            self.screen.blit(surface, (item.x, item.y))
+        else:
+            surface = pygame.Surface((self.cell_size, self.cell_size))
+            surface.fill(SNAKE_COLOR)
+            self.screen.blit(surface, (self.head.x, self.head.y))
+
+    def check_is_wall(self):
+        """
+        检测是否撞墙
+        :return:
+        """
+        if self.head.x > self.screen.get_width():
+            return True
+
+        if self.head.x < 0:
+            return True
+
+        if self.head.y > self.screen.get_height():
+            return True
+
+        if self.head.y < 0:
+            return True
+
+        return False
+
+    def check_eat_self(self):
+        """
+        检测是吃到自己了
+        :return:
+        """
+        for item in self.location[:-1]:
+            if item.x == self.head.x and item.y == self.head.y:
+                return True
+        return False
 
     def move(self, food):
 
@@ -94,19 +112,6 @@ class Snake(object):
         # 🐍头坐标变化位置
         self.head.x += x_change * self.cell_size
         self.head.y += y_change * self.cell_size
-
-        if self.head.x > self.screen.get_width():
-            self.head.x = 0
-
-        if self.head.x < 0:
-            self.head.x = self.screen.get_width()
-
-        if self.head.y > self.screen.get_height():
-            self.head.y = 0
-
-        if self.head.y < 0:
-            self.head.y = self.screen.get_height()
-
         self.location.append(Location(self.head.x, self.head.y))
 
         # 如果位置内容大于当前🐍的长度，就移除第一个位置数据
@@ -120,6 +125,13 @@ class Snake(object):
 
         self.draw()
 
+    def rest(self):
+        self.location = []  # 🐍的位置信息
+        self.head = Location(*self.screen.get_rect().center)  # 🐍头位置
+        self.location.append(self.head)
+        self.length = 1  # 🐍长度
+        self.move_direction = SNAKE_MOVE_UP  # 🐍移动方向
+
 
 class Food(object):
 
@@ -130,9 +142,11 @@ class Food(object):
         self.reset()
 
     def draw(self):
-        grid_surface = pygame.Surface((self.cell_size, self.cell_size))
-        grid_surface.fill((0, 233, 211))
-        self.screen.blit(grid_surface, (self.location.x, self.location.y))
+        surface = pygame.Surface((self.cell_size, self.cell_size))
+        surface.fill(BACKGROUND_COLOR)
+        pygame.draw.circle(surface, (255, 158, 170), (10, 10), 10)
+
+        self.screen.blit(surface, (self.location.x, self.location.y))
 
     def reset(self):
         # 重置当前实物位置
@@ -190,12 +204,6 @@ class Layout(object):
         """
         surface = pygame.Surface((self.width, self.height))
         surface.fill(BACKGROUND_COLOR)
-
-        for x in range(0, self.width, self.cell_size):
-            pygame.draw.line(surface, LINE_COLOR, (x, 0), (x, self.height))
-        for y in range(0, self.height, self.cell_size):
-            pygame.draw.line(surface, LINE_COLOR, (0, y), (self.width, y))
-
         self.screen.blit(surface, (0, 0))
         return
 
@@ -225,10 +233,11 @@ class GameLoop(object):
             if event.type == pygame.QUIT:
                 self.done = True
             elif event.type == pygame.KEYDOWN:
-                if event.key in [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_UP, pygame.K_DOWN]:
+                if event.key in [pygame.K_RIGHT, pygame.K_LEFT, pygame.K_UP, pygame.K_DOWN,
+                                 pygame.K_a, pygame.K_w, pygame.K_s, pygame.K_d]:
                     self.snake.update_move_direction(event.key)
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                # 鼠标按下，
+                # 鼠标按下
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 self.handle_play_mouse(mouse_x, mouse_y)
             elif event.type == pygame.MOUSEMOTION:
@@ -250,6 +259,12 @@ class GameLoop(object):
             return
         self.button.is_active = self.button.rect.collidepoint(mouse_x, mouse_y)
 
+    def game_over(self):
+        self.status = False  # 重置游戏状态
+        self.button.is_hidden = False  # 显示开始按钮
+        self.food.reset()  # 重置食物位置
+        self.snake.rest()  # 重置🐍状态
+
     def run(self):
 
         while not self.done:
@@ -262,6 +277,9 @@ class GameLoop(object):
                 self.snake.move(self.food)
                 # 绘制食物位置
                 self.food.draw()
+                # 检测🐍是否还存活
+                if self.snake.check_is_wall() or self.snake.check_eat_self():
+                    self.game_over()
 
             pygame.display.update()
             self.fps_clock.tick(self.fps)
