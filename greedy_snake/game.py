@@ -63,7 +63,7 @@ class Game(object):
         return
 
     def handle_move_mouse(self, mouse_x, mouse_y):
-        if self.status:
+        if self.status == GAME_STATUS_RUN:
             return
         self.button.is_active = self.button.rect.collidepoint(mouse_x, mouse_y)
 
