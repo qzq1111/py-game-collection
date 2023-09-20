@@ -60,16 +60,16 @@ class Snake(object):
         检测是否撞墙
         :return:
         """
-        if self.head.x > self.screen.get_width():
+        if self.head.x >= self.screen.get_width():
             return True
 
-        if self.head.x < 0:
+        if self.head.x <= 0:
             return True
 
-        if self.head.y > self.screen.get_height():
+        if self.head.y >= self.screen.get_height():
             return True
 
-        if self.head.y < 0:
+        if self.head.y <= 0:
             return True
 
         return False

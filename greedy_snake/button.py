@@ -26,6 +26,10 @@ class Button(object):
         # 设置文字的位置
         self.msg_image_rect.center = self.rect.center
 
+    def set_msg(self, msg):
+        self.msg = msg
+        self._init()
+
     def draw(self):
         if self.is_hidden:
             return
