@@ -5,7 +5,7 @@ from greedy_snake.button import Button
 from greedy_snake.conf import GAME_STATUS_INIT, GAME_STATUS_RUN, GAME_STATUS_OVER, GAME_FPS, GAME_SCORE_COLOR
 from greedy_snake.food import Food
 from greedy_snake.layout import Layout
-from greedy_snake.snake import Snake
+from greedy_snake.snake import Snake, Snake
 
 
 class Game(object):
@@ -86,15 +86,27 @@ class Game(object):
             self.button.draw()
 
             if self.status == GAME_STATUS_RUN:
+
+                # 检查🐍是否可以移动
+                if self.snake.can_move():
+                    # 移动🐍
+                    self.snake.move()
+                    # 检测🐍是否还存活
+                    if self.snake.check_is_wall() or self.snake.check_eat_self():
+                        self.game_over()
+
+                    # 检查是否吃到了食物
+                    if self.snake.check_eat_food(self.food.x, self.food.y):
+                        self.snake.eat()
+                        # 重置实物位置
+                        self.food.reset()
+
                 # 绘制🐍位置
-                self.snake.move(self.food)
+                self.snake.draw()
                 # 绘制食物位置
                 self.food.draw()
                 # 绘制分数
-                self.draw_score(self.snake.length)
-                # 检测🐍是否还存活
-                if self.snake.check_is_wall() or self.snake.check_eat_self():
-                    self.game_over()
+                self.draw_score(self.snake.length - 1)
 
             pygame.display.update()
             self.fps_clock.tick(self.fps)

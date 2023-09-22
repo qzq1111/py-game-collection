@@ -15,5 +15,5 @@ SNAKE_MOVE_RIGHT = "RIGHT"  # 🐍向右移动
 GAME_STATUS_INIT = 1  # 游戏初始化
 GAME_STATUS_RUN = 2  # 游戏运行中
 GAME_STATUS_OVER = 3  # 游戏结束
-GAME_FPS = 10  # 帧数
+GAME_FPS = 60  # 帧数
 GAME_SCORE_COLOR = (235, 69, 95)  # 游戏分数颜色
