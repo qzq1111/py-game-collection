@@ -8,13 +8,50 @@ class Location(object):
         self.y = y
 
 
+class Bullet(object):
+
+    def __init__(self, x, y, screen: pygame.Surface):
+        self.x = x + 20
+        self.y = y - 10
+        self.screen = screen
+        self.bullet_image = None
+
+        self.init()
+
+    def init(self, path=None):
+        """
+        初始化子弹贴图，
+        :param path: 飞机贴图位置
+        :return:
+        """
+        if not path:
+            bullet_image = pygame.image.load("./image/bullet.png").convert_alpha()
+        else:
+            bullet_image = pygame.image.load(path).convert_alpha()
+
+        self.bullet_image = pygame.transform.scale(bullet_image, (10, 10))
+
+    def update(self):
+        self.y -= 10
+
+    def is_over(self):
+        return self.y <= 0
+
+    def draw(self):
+        self.screen.blit(self.bullet_image, (self.x, self.y))
+
+
 class Aircraft(object):
 
     def __init__(self, screen: pygame.Surface):
         self.screen = screen
 
-        self.location = None  # 飞机位置
+        # 飞机位置
+        self.x = None
+        self.y = None
+
         self.aircraft_image = None  # 飞机贴图
+        self.bullet_list = []  # 飞机子弹
 
         self.init()
 
@@ -29,9 +66,8 @@ class Aircraft(object):
         """
         scree_center_x, scree_center_y = self.screen.get_rect().center
 
-        x = scree_center_x - (self.aircraft_image.get_width() / 2)
-        y = self.screen.get_height() - self.aircraft_image.get_height()
-        self.location = Location(x, y)
+        self.x = scree_center_x - (self.aircraft_image.get_width() / 2)
+        self.y = self.screen.get_height() - self.aircraft_image.get_height()
 
     def init_aircraft(self, path=None):
         """
@@ -54,30 +90,46 @@ class Aircraft(object):
         """
 
         if key == pygame.K_RIGHT or key == pygame.K_d:
-            self.location.x += 10
+            self.x += 10
         elif key == pygame.K_LEFT or key == pygame.K_a:
-            self.location.x -= 10
+            self.x -= 10
         elif key == pygame.K_UP or key == pygame.K_w:
-            self.location.y -= 10
+            self.y -= 10
         elif key == pygame.K_DOWN or key == pygame.K_s:
-            self.location.y += 10
+            self.y += 10
 
-        if self.location.x > self.screen.get_width() - self.aircraft_image.get_width():
-            self.location.x = self.screen.get_width() - self.aircraft_image.get_width()
+        if self.x > self.screen.get_width() - self.aircraft_image.get_width():
+            self.x = self.screen.get_width() - self.aircraft_image.get_width()
 
-        if self.location.x < 0:
-            self.location.x = 0
+        if self.x < 0:
+            self.x = 0
 
-        if self.location.y > self.screen.get_height() - self.aircraft_image.get_height():
-            self.location.y = self.screen.get_height() - self.aircraft_image.get_height()
+        if self.y > self.screen.get_height() - self.aircraft_image.get_height():
+            self.y = self.screen.get_height() - self.aircraft_image.get_height()
 
-        if self.location.y < 0:
-            self.location.y = 0
+        if self.y < 0:
+            self.y = 0
 
         return
 
     def draw(self):
-        self.screen.blit(self.aircraft_image, (self.location.x, self.location.y))
+        self.screen.blit(self.aircraft_image, (self.x, self.y))
+
+        # 子弹的行动
+        for item in self.bullet_list:
+            item.draw()
+            item.update()
+
+        # 移除无效的子弹
+
+        tmp = []
+        for item in self.bullet_list:
+            if not item.is_over():
+                tmp.append(item)
+        self.bullet_list = tmp
+
+    def fire(self):
+        self.bullet_list.append(Bullet(self.x, self.y, self.screen))
 
 
 def main():
@@ -91,9 +143,7 @@ def main():
 
     done = False
 
-    x = 0
-    y = 0
-
+    shoot_frequency = 0
     while not done:
 
         for event in pygame.event.get():
@@ -106,6 +156,12 @@ def main():
 
         screen.fill((255, 255, 255))
         aircraft.draw()
+
+        if shoot_frequency % 15 == 0:
+            aircraft.fire()
+        shoot_frequency += 1
+        if shoot_frequency >= 15:
+            shoot_frequency = 0
 
         pygame.display.update()
         fps_clock.tick(30)
